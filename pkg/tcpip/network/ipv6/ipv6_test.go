@@ -687,6 +687,9 @@ func TestReceiveIPv6Fragments(t *testing.T) {
 		// Used to test cases where the fragment blocks are not a multiple of
 		// the fragment block size of 8 (RFC 8200 section 4.5).
 		udpPayload3Length = 127
+		// Used to test cases where the payload length of the packet reassembled
+		// from the fragment would exceeds 65,535 octets (RFC 8200 section 4.5).
+		udpPayload4Length = 65536 - header.UDPMinimumSize
 		fragmentExtHdrLen = 8
 		// Note, not all routing extension headers will be 8 bytes but this test
 		// uses 8 byte routing extension headers for most sub tests.
@@ -730,6 +733,10 @@ func TestReceiveIPv6Fragments(t *testing.T) {
 	var udpPayload3Addr1ToAddr2Buf [udpPayload3Length]byte
 	udpPayload3Addr1ToAddr2 := udpPayload3Addr1ToAddr2Buf[:]
 	ipv6Payload3Addr1ToAddr2 := udpGen(udpPayload3Addr1ToAddr2, 3, addr1, addr2)
+
+	var udpPayload4Addr1ToAddr2Buf [udpPayload4Length]byte
+	udpPayload4Addr1ToAddr2 := udpPayload4Addr1ToAddr2Buf[:]
+	ipv6Payload4Addr1ToAddr2 := udpGen(udpPayload4Addr1ToAddr2, 4, addr1, addr2)
 
 	tests := []struct {
 		name             string
@@ -975,6 +982,44 @@ func TestReceiveIPv6Fragments(t *testing.T) {
 							buffer.View([]byte{uint8(header.UDPProtocolNumber), 0, 0, 64, 0, 0, 0, 1}),
 
 							ipv6Payload3Addr1ToAddr2[63:],
+						},
+					),
+				},
+			},
+			expectedPayloads: nil,
+		},
+		{
+			name: "Two fragments reassembled into a packet with payload exceeding 65,535 octets",
+			fragments: []fragmentData{
+				{
+					srcAddr: addr1,
+					dstAddr: addr2,
+					nextHdr: fragmentExtHdrID,
+					data: buffer.NewVectorisedView(
+						fragmentExtHdrLen+65520,
+						[]buffer.View{
+							// Fragment extension header.
+							//
+							// Fragment offset = 0, More = true, ID = 1
+							buffer.View([]byte{uint8(header.UDPProtocolNumber), 0, 0, 1, 0, 0, 0, 1}),
+
+							ipv6Payload4Addr1ToAddr2[:65520],
+						},
+					),
+				},
+				{
+					srcAddr: addr1,
+					dstAddr: addr2,
+					nextHdr: fragmentExtHdrID,
+					data: buffer.NewVectorisedView(
+						fragmentExtHdrLen+len(ipv6Payload4Addr1ToAddr2)-65520,
+						[]buffer.View{
+							// Fragment extension header.
+							//
+							// Fragment offset = 8190, More = false, ID = 1
+							buffer.View([]byte{uint8(header.UDPProtocolNumber), 0, 255, 240, 0, 0, 0, 1}),
+
+							ipv6Payload4Addr1ToAddr2[65520:],
 						},
 					),
 				},
