@@ -414,6 +414,11 @@ func (fs *filesystem) lookupAndVerifyLocked(ctx context.Context, parent *dentry,
 			}
 			panic(fmt.Sprintf("Expected Merkle file for target %s but none found", parentPath+"/"+name))
 		}
+	} else if childErr == syserror.ENOENT && childMerkleErr == syserror.ENOENT {
+		// Both the child and the corresponding Merkle tree are missing.
+		// This is not necessarily an unexpected modification. It could
+		// be an incorrect path parameter, so just return error.
+		return nil, childErr
 	}
 
 	mask := uint32(linux.STATX_TYPE | linux.STATX_MODE | linux.STATX_UID | linux.STATX_GID)
