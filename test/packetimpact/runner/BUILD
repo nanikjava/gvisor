@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_library", "go_test")
+load("//tools:defs.bzl", "bzl_library", "go_test")
 
 package(
     default_visibility = ["//test/packetimpact:__subpackages__"],

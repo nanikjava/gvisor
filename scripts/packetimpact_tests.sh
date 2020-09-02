@@ -16,8 +16,15 @@
 
 source $(dirname $0)/common.sh
 
-make load-packetimpact
+echo 'discarding stderr'
+
+make load-packetimpact 2>/dev/null | tee runsc_logs_make_stdout.tar.gz
+
+echo 'make done'
 
 install_runsc_for_test runsc-d
+
+echo 'install done'
+
 QUERY_RESULT=$(query "attr(tags, packetimpact, tests(//test/packetimpact/...))")
 test_runsc $QUERY_RESULT

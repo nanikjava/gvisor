@@ -43,6 +43,7 @@ function test_runsc() {
 }
 
 function install_runsc_for_test() {
+  echo "INSTALL_RUNSC_FOR_TEST"
   local -r test_name=$1
   shift
   if [[ -z "${test_name}" ]]; then
@@ -81,6 +82,10 @@ function install_runsc() {
   # Clear old logs files that may exist.
   sudo rm -f "${RUNSC_LOGS_DIR}"/'*'
 
+  echo "RESTARTING DOCKER"
+
   # Restart docker to pick up the new runtime configuration.
   sudo systemctl restart docker
+
+  echo "RESTARTED DOCKER"
 }
