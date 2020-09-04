@@ -191,7 +191,7 @@ func TestCacheReplace(t *testing.T) {
 }
 
 func TestCacheResolution(t *testing.T) {
-	c := newLinkAddrCache(1<<63-1, 250*time.Millisecond, 1)
+	c := newLinkAddrCache(1<<63-1, 10*time.Second, 1)
 	linkRes := &testLinkAddressResolver{cache: c}
 	for i, ta := range testAddrs {
 		got, err := getBlocking(c, ta.addr, linkRes)
